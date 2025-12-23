@@ -1,17 +1,7 @@
 # QCamber
-Free and open source PCB design viewer written in Qt.
-
-![screenshot](https://raw.github.com/aitjcize/QCamber/master/wiki/screenshot.png)
-
-QCamber is developed in the hope to provide high quaility open source PCB design/viewer suite for everyone. Anyone can contribute to the project and the project is guaranteed to be free and open source in the future.
-
-QCamber currently only supports Valor ODB++ format, but with the help of a sister project [ipc2581_to_odb](https://github.com/Cobra-Kao/ipc2581_to_odb), IPC2851 format will be support in the future.
-
-## Download
-A prebuilt version for windows 32-bit is available [here](https://raw.github.com/aitjcize/QCamber/master/prebuilt/win32/QCamber-git-b33d824.zip).
-
-## Bugs
-* Please report bugs to the Github issue tracker.
+- Không push trực tiếp vào main
+- Mọi thay đổi phải qua Pull Request
+- 1 approval là bắt buộc
 
 ## Contributing
 1. Fork it
