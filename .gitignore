@@ -1,0 +1,13 @@
+.*.swp
+*.o
+Makefile
+.build
+.DS_Store
+camview.pro.user
+camview.pbproj
+camview.xcodeproj
+.vs/
+.vcxproj
+.vcxproj.user
+.tgz
+bin/Jobs/

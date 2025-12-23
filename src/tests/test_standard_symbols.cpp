@@ -1,0 +1,145 @@
+/**
+ * @file   test_standard_symbols.cpp
+ * @author Wei-Ning Huang (AZ) <aitjcize@gmail.com>
+ *
+ * Copyright (C) 2012 - 2014 Wei-Ning Huang (AZ) <aitjcize@gmail.com>
+ * All Rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+
+#include "testviewwidget.h"
+
+#include "testviewwidget.h"
+#include "archiveloader.h"
+#include "symbolfactory.h"
+#include "context.h"
+
+int main(int argc, char *argv[])
+{
+  QApplication app(argc, argv);
+
+  TestViewWidget widget;
+  QGraphicsScene *scene = new QGraphicsScene();
+  scene->setItemIndexMethod(QGraphicsScene::NoIndex);
+  scene->setSceneRect(-400, -400, 800, 800);
+  widget.setScene(scene);
+
+  AttribData attrib;
+
+  Symbol* symbol = SymbolFactory::create("r50", P, attrib);
+  scene->addItem(symbol);
+  symbol->setPos(0, 0);
+
+  Symbol* symbol2 = SymbolFactory::create("rect100x50xr20x13", P, attrib);
+  scene->addItem(symbol2);
+  symbol2->setPos(0.1, 0);
+
+  Symbol* symbol3 = SymbolFactory::create("oval50x100", P, attrib);
+  scene->addItem(symbol3);
+  symbol3->setPos(0.2, 0);
+
+  Symbol* symbol4 = SymbolFactory::create("di100x50", P, attrib);
+  scene->addItem(symbol4);
+  symbol4->setPos(0.3, 0);
+
+  Symbol* symbol5 = SymbolFactory::create("oct60x60x20", P, attrib);
+  scene->addItem(symbol5);
+  symbol5->setPos(0, -0.1);
+
+  Symbol* symbol6 = SymbolFactory::create("donut_r60x30", P, attrib);
+  scene->addItem(symbol6);
+  symbol6->setPos(0.1, -0.1);
+
+  Symbol* symbol7 = SymbolFactory::create("s40", P, attrib);
+  scene->addItem(symbol7);
+  symbol7->setPos(0.2, -0.1);
+
+  Symbol* symbol8 = SymbolFactory::create("tri30x60", P, attrib);
+  scene->addItem(symbol8);
+  symbol8->setPos(0.3, -0.1);
+
+  Symbol* symbol9 = SymbolFactory::create("donut_s60x30", P, attrib);
+  scene->addItem(symbol9);
+  symbol9->setPos(0, -0.2);
+
+  Symbol* symbol10 = SymbolFactory::create("hex_l60x60x20", P, attrib);
+  scene->addItem(symbol10);
+  symbol10->setPos(0.1, -0.2);
+
+  Symbol* symbol11 = SymbolFactory::create("hex_s60x60x20", P, attrib);
+  scene->addItem(symbol11);
+  symbol11->setPos(0.2, -0.2);
+
+  Symbol* symbol12 = SymbolFactory::create("bfr60", P, attrib);
+  scene->addItem(symbol12);
+  symbol12->setPos(0.3, -0.2);
+
+  Symbol* symbol13 = SymbolFactory::create("bfs60", P, attrib);
+  scene->addItem(symbol13);
+  symbol13->setPos(0, -0.3);
+
+  Symbol* symbol14 = SymbolFactory::create("oval_h30x60", P, attrib);
+  scene->addItem(symbol14);
+  symbol14->setPos(0.1, -0.3);
+
+  Symbol* symbol15 = SymbolFactory::create("ths60x40x45x4x10", P, attrib);
+  scene->addItem(symbol15);
+  symbol15->setPos(0.2, -0.3);
+
+  Symbol* symbol16 = SymbolFactory::create("thr60x40x45x4x10", P, attrib);
+  scene->addItem(symbol16);
+  symbol16->setPos(0.3, -0.3);
+
+  Symbol* symbol17 = SymbolFactory::create("s_ths60x40x45x4x10", P, attrib);
+  scene->addItem(symbol17);
+  symbol17->setPos(0.4, 0.0);
+
+  Symbol* symbol18 = SymbolFactory::create("s_tho60x40x45x4x10", P, attrib);
+  scene->addItem(symbol18);
+  symbol18->setPos(0.4, -0.1);
+
+  Symbol* symbol19 = SymbolFactory::create("sr_ths60x40x45x4x10", P, attrib);
+  scene->addItem(symbol19);
+  symbol19->setPos(0.4, -0.2);
+
+  Symbol* symbol20 = SymbolFactory::create("rc_ths60x40x45x4x10x10", P, attrib);
+  scene->addItem(symbol20);
+  symbol20->setPos(0.4, -0.3);
+
+  Symbol* symbol21 = SymbolFactory::create("rc_tho60x40x45x4x10x5", P, attrib);
+  scene->addItem(symbol21);
+  symbol21->setPos(0.5, 0.0);
+
+  Symbol* symbol22 = SymbolFactory::create("el60x30", P, attrib);
+  scene->addItem(symbol22);
+  symbol22->setPos(0.5, -0.1);
+
+  Symbol* symbol23 = SymbolFactory::create("moire5x10x4x4x100x0", P, attrib);
+  scene->addItem(symbol23);
+  symbol23->setPos(0.5, -0.2);
+
+  Symbol* symbol24 = SymbolFactory::create("hole50xpx4x5", P, attrib);
+  scene->addItem(symbol24);
+  symbol24->setPos(0.5, -0.3);
+
+  Symbol* symbol25 = SymbolFactory::create("null1", P, attrib);
+  scene->addItem(symbol25);
+  symbol25->setPos(0.6, 0.0);
+
+  widget.show();
+  return app.exec();
+}
+
