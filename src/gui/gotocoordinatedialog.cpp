@@ -30,9 +30,12 @@ GoToCoordinateDialog::GoToCoordinateDialog(QWidget *parent)
     , m_yLabel(nullptr)
     , m_unitLabel(nullptr)
     , m_zoomLabel(nullptr)
+    , m_angleKLabel(nullptr)
+    , m_angleKSpinBox(nullptr)
     , m_currentUnit(0) // Default to inches
     , m_coordinate(0.0, 0.0)
     , m_zoomLevel(128.0) // Default zoom level changed to 128x
+    , m_angleK(0.0) // Default angle K for space measurement
 {
     setupUI();
     setWindowTitle(tr("Go To Coordinate"));
@@ -102,6 +105,18 @@ void GoToCoordinateDialog::setupUI()
     coordLayout->addWidget(m_unitComboBox, 2, 1);
     coordLayout->addWidget(m_zoomLabel, 3, 0);
     coordLayout->addWidget(m_zoomComboBox, 3, 1);
+    
+    // AngleK for space measurement
+    m_angleKLabel = new QLabel(tr("Angle K:"), this);
+    m_angleKSpinBox = new QDoubleSpinBox(this);
+    m_angleKSpinBox->setDecimals(1);
+    m_angleKSpinBox->setRange(-360.0, 360.0);
+    m_angleKSpinBox->setValue(0.0);
+    m_angleKSpinBox->setSuffix("°");
+    m_angleKSpinBox->setToolTip(tr("Angle for space measurement (0° = horizontal)"));
+    
+    coordLayout->addWidget(m_angleKLabel, 4, 0);
+    coordLayout->addWidget(m_angleKSpinBox, 4, 1);
     
     // Create button layout
     QHBoxLayout* buttonLayout = new QHBoxLayout();
@@ -185,6 +200,9 @@ void GoToCoordinateDialog::onGoToClicked()
     zoomText.chop(1); // Remove "x" character
     m_zoomLevel = zoomText.toDouble();
     
+    // Get angleK value
+    m_angleK = m_angleKSpinBox->value();
+    
     accept();
 }
 
@@ -209,4 +227,9 @@ void GoToCoordinateDialog::setDisplayUnit(int unit)
         m_unitComboBox->setCurrentIndex(unit);
         onUnitChanged(unit);
     }
+}
+
+double GoToCoordinateDialog::getAngleK() const
+{
+    return m_angleK;
 }

@@ -716,11 +716,12 @@ void ViewerWindow::on_actionGoToCoordinate_triggered(void)
   if (m_goToCoordinateDialog->exec() == QDialog::Accepted) {
     QPointF targetCoord = m_goToCoordinateDialog->getCoordinate();
     double zoomLevel = m_goToCoordinateDialog->getZoomLevel();
+    double angleK = m_goToCoordinateDialog->getAngleK();
     
     QString savedFilePath;
     QString detectedObject;
     bool success = navigateAndCapture("", targetCoord.x(), targetCoord.y(), zoomLevel, 
-                                     &savedFilePath, nullptr, &detectedObject);
+                                     &savedFilePath, nullptr, &detectedObject, angleK);
     
     if (success) {
       QString message = tr("Coordinate view has been automatically exported to:\n%1\n\n"
@@ -836,7 +837,7 @@ void ViewerWindow::on_actionSaveHighlight_triggered()
   
   QJsonObject data = scene->exportHighlightData();
   
-  if (data["highlightCount"].toInt() == 0) {
+  if (data["highlightCount"].toInt() == 0) { 
     QMessageBox::information(this, tr("No Highlights"),
                             tr("No highlighted symbols to save."));
     return;
@@ -1057,9 +1058,16 @@ QString ViewerWindow::detectObjectAtCoordinate(const QImage &image, const QPoint
                qAbs(c1.blue() - c2.blue()) <= tolerance;
     };
     
-    if (dominantColor == bgRgb || colorMatch(detectedColor, Qt::black, 10)) {
-        LOG_INFO("Detected: NONE (background/black)");
+    /* Check for background color first
+    if (dominantColor == bgRgb) {
+        LOG_INFO("Detected: NONE (background)");
         return "none";
+    }
+    */
+    // Check for black color (space)
+    if (colorMatch(detectedColor, Qt::black, 10)) {
+        LOG_INFO("Detected: SPACE (black color)");
+        return "space";
     }
     
     if (colorMatch(detectedColor, QColor(0, 0, 255), 40)) {
@@ -1078,7 +1086,7 @@ QString ViewerWindow::detectObjectAtCoordinate(const QImage &image, const QPoint
 }
 
 bool ViewerWindow::navigateAndCapture(const QString &layerName, double x, double y, double zoom,
-                                     QString *outputPath, QByteArray *imageData, QString *detectedObject)
+                                     QString *outputPath, QByteArray *imageData, QString *detectedObject, double angleK)
 {
     LOG_INFO(QString("navigateAndCapture: layer=%1, x=%2, y=%3, zoom=%4")
              .arg(layerName).arg(x).arg(y).arg(zoom));
@@ -1241,6 +1249,31 @@ bool ViewerWindow::navigateAndCapture(const QString &layerName, double x, double
             } else {
                 LOG_WARNING(QString("Measurement failed or unreasonable: %1 mm").arg(traceWidth));
                 objectType = "trace_measurement_failed";
+            }
+        }
+        
+        // ========================================
+        // NEW: If space detected, measure width
+        // ========================================
+        if (objectType == "space") {
+            LOG_INFO(QString("Space detected, measuring width at angleK=%1").arg(angleK));
+            
+            double spaceWidth = measureSpaceWidth(image, sceneCoord, sceneRect, targetRect, angleK);
+            
+            if (spaceWidth > 0.0 && spaceWidth < 50.0) {
+                double widthMils = spaceWidth / 0.0254;
+                LOG_INFO(QString("Space width measured: %1 mm (%2 mils) at angle %3")
+                         .arg(spaceWidth, 0, 'f', 4)
+                         .arg(widthMils, 0, 'f', 2)
+                         .arg(angleK));
+                
+                objectType = QString("space_%1mm_%2mils_angle%3deg")
+                            .arg(spaceWidth, 0, 'f', 3)
+                            .arg(widthMils, 0, 'f', 1)
+                            .arg(angleK, 0, 'f', 0);
+            } else {
+                LOG_WARNING(QString("Space measurement failed or unreasonable: %1 mm").arg(spaceWidth));
+                objectType = "space_measurement_failed";
             }
         }
         
@@ -1671,3 +1704,114 @@ double ViewerWindow::measureTraceWidthImproved(const QImage &image, const QPoint
     
     return widthMM;
 }
+
+double ViewerWindow::measureSpaceWidth(const QImage &image, const QPointF &sceneCoord,
+                                       const QRectF &sceneRect, const QRectF &targetRect,
+                                       double angleK)
+{
+    double scaleX = targetRect.width() / sceneRect.width();
+    double scaleY = targetRect.height() / sceneRect.height();
+    
+    int imgX = static_cast<int>((sceneCoord.x() - sceneRect.left()) * scaleX);
+    int imgY = static_cast<int>((sceneCoord.y() - sceneRect.top()) * scaleY);
+    
+    LOG_INFO(QString("=== SPACE MEASUREMENT ==="));
+    LOG_INFO(QString("Measuring space at pixel(%1, %2), angleK=%3").arg(imgX).arg(imgY).arg(angleK));
+    LOG_INFO(QString("Scale: scaleX=%1 px/inch, scaleY=%2 px/inch").arg(scaleX).arg(scaleY));
+    
+    if (imgX < 0 || imgX >= image.width() || imgY < 0 || imgY >= image.height()) {
+        LOG_WARNING("Coordinate out of bounds");
+        return -1.0;
+    }
+    
+    QRgb centerPixel = image.pixel(imgX, imgY);
+    QColor centerColor(centerPixel);
+    
+    LOG_INFO(QString("Center pixel: RGB(%1, %2, %3)").arg(centerColor.red()).arg(centerColor.green()).arg(centerColor.blue()));
+    
+    bool isBlack = (centerColor.red() < 30 && centerColor.green() < 30 && centerColor.blue() < 30);
+    
+    if (!isBlack) {
+        LOG_WARNING(QString("Not black/space color: RGB(%1,%2,%3)").arg(centerColor.red()).arg(centerColor.green()).arg(centerColor.blue()));
+        return -1.0;
+    }
+    
+    auto isSpaceColor = [](QRgb rgb) -> bool {
+        QColor c(rgb);
+        return (c.red() < 30 && c.green() < 30 && c.blue() < 30);
+    };
+    
+    double angleRad = angleK * M_PI / 180.0;
+    double dx = std::cos(angleRad);
+    double dy = std::sin(angleRad);
+    
+    LOG_INFO(QString("Direction vector: dx=%1, dy=%2").arg(dx).arg(dy));
+    
+    double distance1 = 0.0;
+    double stepSize = 0.5;
+    int maxSteps = 10000;
+    
+    for (int step = 1; step <= maxSteps; ++step) {
+        double offsetX = dx * step * stepSize;
+        double offsetY = dy * step * stepSize;
+        
+        int px = static_cast<int>(imgX + offsetX);
+        int py = static_cast<int>(imgY + offsetY);
+        
+        if (px < 0 || px >= image.width() || py < 0 || py >= image.height()) {
+            distance1 = step * stepSize;
+            LOG_INFO(QString("Hit image boundary in positive direction at step %1").arg(step));
+            break;
+        }
+        
+        if (!isSpaceColor(image.pixel(px, py))) {
+            distance1 = (step - 1) * stepSize;
+            LOG_INFO(QString("Hit color boundary in positive direction at step %1").arg(step));
+            break;
+        }
+    }
+    
+    double distance2 = 0.0;
+    
+    for (int step = 1; step <= maxSteps; ++step) {
+        double offsetX = -dx * step * stepSize;
+        double offsetY = -dy * step * stepSize;
+        
+        int px = static_cast<int>(imgX + offsetX);
+        int py = static_cast<int>(imgY + offsetY);
+        
+        if (px < 0 || px >= image.width() || py < 0 || py >= image.height()) {
+            distance2 = step * stepSize;
+            LOG_INFO(QString("Hit image boundary in negative direction at step %1").arg(step));
+            break;
+        }
+        
+        if (!isSpaceColor(image.pixel(px, py))) {
+            distance2 = (step - 1) * stepSize;
+            LOG_INFO(QString("Hit color boundary in negative direction at step %1").arg(step));
+            break;
+        }
+    }
+    
+    double widthPixels = distance1 + distance2;
+    
+    LOG_INFO(QString("Distance measurements: d1=%1 px, d2=%2 px, total=%3 px").arg(distance1, 0, 'f', 2).arg(distance2, 0, 'f', 2).arg(widthPixels, 0, 'f', 2));
+    
+    if (widthPixels <= 1.0) {
+        LOG_WARNING("Width too small - measurement failed");
+        return -1.0;
+    }
+    
+    double pixelsPerInch = (scaleX + scaleY) / 2.0;
+    double widthInches = widthPixels / pixelsPerInch;
+    double widthMM = widthInches * 25.4;
+    
+    LOG_INFO(QString("RESULT: %1 px -> %2 inches -> %3 mm").arg(widthPixels, 0, 'f', 2).arg(widthInches, 0, 'f', 6).arg(widthMM, 0, 'f', 4));
+    
+    if (widthMM < 0.01 || widthMM > 50.0) {
+        LOG_WARNING(QString("Space width %1 mm seems unreasonable").arg(widthMM));
+    }
+    
+    return widthMM;
+}
+

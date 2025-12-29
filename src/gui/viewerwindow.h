@@ -150,10 +150,14 @@ private:
                                    const QRectF &sceneRect, const QRectF &targetRect,
                                    double angle);
   
+  double measureSpaceWidth(const QImage &image, const QPointF &sceneCoord,
+                          const QRectF &sceneRect, const QRectF &targetRect,
+                          double angleK);
+  
   // ONLY ONE declaration here, WITH default arguments
   bool navigateAndCapture(const QString &layerName, double x, double y, double zoom,
                          QString *outputPath = nullptr, QByteArray *imageData = nullptr,
-                         QString *detectedObject = nullptr);
+                         QString *detectedObject = nullptr, double angleK = 0.0);
 };
 
 #endif // __MAINWINDOW_H__
