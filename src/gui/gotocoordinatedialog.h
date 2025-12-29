@@ -36,6 +36,9 @@ public:
     // Get the selected zoom level
     double getZoomLevel() const;
     
+    // Get the angle K for space measurement
+    double getAngleK() const;
+    
     // Set the current display unit (0=Inch, 1=MM)
     void setDisplayUnit(int unit);
 
@@ -59,10 +62,13 @@ private:
     QLabel* m_yLabel;
     QLabel* m_unitLabel;
     QLabel* m_zoomLabel;
+    QLabel* m_angleKLabel;
+    QDoubleSpinBox* m_angleKSpinBox;
     
     int m_currentUnit; // 0=Inch, 1=MM
     QPointF m_coordinate; // Always stored in inches internally
     double m_zoomLevel;
+    double m_angleK; // Angle for space measurement (degrees)
 };
 
 #endif // GOTOCOORDINATEDIALOG_H
