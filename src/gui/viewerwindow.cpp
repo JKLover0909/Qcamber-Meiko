@@ -1289,13 +1289,10 @@ bool ViewerWindow::navigateAndCapture(const QString &layerName, double x, double
         }
     }
     
-    QString coordStr = QString("_at_%1_%2")
-                       .arg(targetCoord.x(), 0, 'f', 3)
-                       .arg(targetCoord.y(), 0, 'f', 3);
-    
-    QString filename = QString("%1_%2%3%4_%5")
-        .arg(m_job).arg(m_step).arg(layerName).arg(coordStr).arg(objectType);
-    filename += ".png";
+    QString filename = QString("%1_%2_%3.png")
+        .arg(targetCoord.x(), 0, 'f', 3)
+        .arg(targetCoord.y(), 0, 'f', 3)
+        .arg(objectType);
     QString filePath = exportDir + "/" + filename;
     
     LOG_INFO(QString("Saving image to: %1").arg(filePath));
